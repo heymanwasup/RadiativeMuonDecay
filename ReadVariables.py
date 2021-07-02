@@ -95,8 +95,8 @@ class ReadVariables:
             event.caloHitY = ttree.caloHitY
             event.caloHitZ = ttree.caloHitZ
 
-        time_energy_dict = {}        
-        time_ncalo_dict = {}
+        time_energy_dict = event.time_energy_dict
+        time_ncalo_dict = event.time_ncalo_dict
         for nCalo in range(24):
             E = ttree.caloHitEnergyArray[nCalo]
             T = ttree.caloHitTimeArray[nCalo]
@@ -129,12 +129,6 @@ class ReadVariables:
                 event.N3 = nCalo
                 event.T3 = T
 
-        event.time_energy_dict = time_energy_dict
-        event.time_ncalo_dict = time_ncalo_dict
-
-
-        
-
         NCalo = len(time_energy_dict)
         time_list = time_energy_dict.keys()
         time_list.sort()
@@ -152,8 +146,7 @@ class ReadVariables:
             event.Et3 = time_energy_dict[time_list[2]]
             event.Tt3 = time_list[2]
             event.Nt3 = time_ncalo_dict[time_list[2]]
-
-        event.time_energy_dict = time_energy_dict
+        
         return True
 
 
@@ -165,7 +158,7 @@ class ReadVariables:
         event = Event()
         Nentries = ttree.GetEntries()    
         for n in range(Nentries):
-            if not n%10000:
+            if not n%50000:
                 print 'Processed %s events for %s tree'%(n,treeType)
             ttree.GetEntry(n)            
            
@@ -231,14 +224,10 @@ class ReadVariables:
         for nCount,E in count_E:
             #deltaN for leading and sub-leading calos with E>200,100,50,0
             if nCount >= 2:                        
-                self.hist_svc.BookFillTH1('E%s_deltaN'%(E),'Delta N of calos with E>%s'%(E),14,-0.5,13.5,deltaN)
+                self.hist_svc.BookFillTH1('E%d_deltaN'%(E),'Delta N of calos with E>%d'%(E),14,-0.5,13.5,deltaN)
                 #deltaT for nearby (in space) 2 calos with E>200,100,50,0
                 if deltaN == 1:
-                    self.hist_svc.BookFillTH1('E%s_deltaT'%(E),'dT of nearby calos with E>%s'%(E),100,0,20,deltaT)
-                
-
-
-            
+                    self.hist_svc.BookFillTH1('E%d_deltaT'%(E),'dT of nearby calos with E>%d'%(E),100,0,20,deltaT)
 
 
         #calo hit position
@@ -253,22 +242,22 @@ class ReadVariables:
 
 
 
-    #bin size 149.2 ns 149.2
-    #3000*149.2 = 447600.00
-    #time ranges from [0,500e+3ns]
+    #bin size 149.2 ns
+    #for 3k bins, maximum time reach to 3000*149.2 = 447.600 micro-senconds (about 7.5*muonLifeTime)
+    #from tree->Draw, the time ranges approximatedly from 0 to 500e+3ns
     def fillWigglePlot(self,event):
         for time,E in event.time_energy_dict.items():
             #Time vs Energy
             ncalo = event.time_ncalo_dict[time]
             self.hist_svc.BookFillTH2('TE','Time vs Energy', 3000,0,447.6e3,1000,0,3000,time,E)
             self.hist_svc.BookFillTH1('T','N(t)',3000,0,447.6e3,time)
-            self.hist_svc.BookFillTH1('T%s'%(ncalo),'N(t) : calo %s'%(ncalo),3000,0,447.6e3,time)
+            self.hist_svc.BookFillTH1('T%d'%(ncalo),'N(t) : calo %d'%(ncalo),3000,0,447.6e3,time)
 
             energy_threshold = [1.4,1.5,1.6,1.7,1.8,1.9,2.0] # GeV
             for threshold in energy_threshold:
                 if E>threshold:                    
-                    self.hist_svc.BookFillTH1('Ethreshold%s_T'%(E*10),'N(t)',3000,0,447.6e3,time)
-                    self.hist_svc.BookFillTH1('Ethreshold%s_T%s'%(E*10,ncalo),'N(t,E>%s GeV) : calo %s'%(E,ncalo),3000,0,447.6e3,time)
+                    self.hist_svc.BookFillTH1('Ethreshold%d_T'%(threshold*10),'N(t,E>%dGeV)'%(threshold),3000,0,447.6e3,time)
+                    self.hist_svc.BookFillTH1('Ethreshold%d_T%d'%(threshold*10,ncalo),'N(t,E>%d GeV) : calorimeter %d'%(threshold,ncalo),3000,0,447.6e3,time)
 
     def fillHists(self,event):
         treeType = self.name_handler.GetSampleTag()
@@ -289,8 +278,6 @@ class ReadVariables:
         self.fillAnalysisHists(event)
         self.name_handler.SetChannelTag(eventType)
         self.fillAnalysisHists(event)
-        
-
 
 
 def main():
