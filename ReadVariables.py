@@ -249,15 +249,18 @@ class ReadVariables:
         for time,E in event.time_energy_dict.items():
             #Time vs Energy
             ncalo = event.time_ncalo_dict[time]
-            self.hist_svc.BookFillTH2('TE','Time vs Energy', 3000,0,447.6e3,1000,0,3000,time,E)
+            self.hist_svc.BookFillTH2('TE','Time vs Energy', 3000,0,447.6e3,320*2,0,3200,time,E)
+            self.hist_svc.BookFillTH2('TE%d'%(ncalo),'Time vs Energy: calo %d'%(ncalo), 3000,0,447.6e3,320*2,0,3200,time,E)
             self.hist_svc.BookFillTH1('T','N(t)',3000,0,447.6e3,time)
             self.hist_svc.BookFillTH1('T%d'%(ncalo),'N(t) : calo %d'%(ncalo),3000,0,447.6e3,time)
 
+
             energy_threshold = [1.4,1.5,1.6,1.7,1.8,1.9,2.0] # GeV
             for threshold in energy_threshold:
-                if E>threshold:                    
-                    self.hist_svc.BookFillTH1('Ethreshold%d_T'%(threshold*10),'N(t,E>%dGeV)'%(threshold),3000,0,447.6e3,time)
+                if E>threshold:                                    
+                    self.hist_svc.BookFillTH1('Ethreshold%d_T'%(threshold*10),'N(t,E>%dGeV)'%(threshold),3000,0,447.6e3,time)                    
                     self.hist_svc.BookFillTH1('Ethreshold%d_T%d'%(threshold*10,ncalo),'N(t,E>%d GeV) : calorimeter %d'%(threshold,ncalo),3000,0,447.6e3,time)
+
 
     def fillHists(self,event):
         treeType = self.name_handler.GetSampleTag()
