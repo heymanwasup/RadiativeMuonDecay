@@ -95,6 +95,10 @@ def Scale(hist):
 def RetrieveHist(tfile,fmtStr):
     histA = tfile.Get(fmtStr.format('OMD')).Clone()
     histB = tfile.Get(fmtStr.format('RMD')).Clone()
+    histA.SetStats(0)
+    histB.SetStats(0)
+    
+
     return histA,histB
 
 def Draw(boxName,tfile,fmtStr,title,xTitle,yTitle,isScale=False,xRange=None):

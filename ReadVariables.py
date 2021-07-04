@@ -51,9 +51,8 @@ class Event:
         self.time_ncalo_dict = {}
 
 class ReadVariables:
-    def __init__(self):
-        # self.tfile_omd = R.TFile('./input/gm2offline_ana_omd.root')
-        # self.tfile_rmd = R.TFile('./input/gm2offline_ana_rmd.root')
+    def __init__(self,run_version='default'):
+        self.run_version = run_version
         self.tfile_omd = R.TFile('./input/gm2offline_ana_omd_all.root')
         self.tfile_rmd = R.TFile('./input/gm2offline_ana_rmd_all.root')
         self.ttree_omd = self.tfile_omd.Get('G2PhaseAnalyzer/g2phase')
@@ -76,7 +75,7 @@ class ReadVariables:
         
 
     def WriteHistos(self):
-        tfile_out = R.TFile('./output/hists_output_all_v1.root','recreate')
+        tfile_out = R.TFile('./output/hists_output_%s.root'%(self.run_version),'recreate')
         tfile_out.cd()
 
         self.loopTree(self.ttree_omd,'OMD')
@@ -246,18 +245,20 @@ class ReadVariables:
     #for 3k bins, maximum time reach to 3000*149.2 = 447.600 micro-senconds (about 7.5*muonLifeTime)
     #from tree->Draw, the time ranges approximatedly from 0 to 500e+3ns
     def fillWigglePlot(self,event):
-        for time,E in event.time_energy_dict.items():
-            #Time vs Energy
+        for time,E in event.time_energy_dict.items():            
             ncalo = event.time_ncalo_dict[time]
+            #Time vs Energy
             self.hist_svc.BookFillTH2('TE','Time vs Energy', 3000,0,447.6e3,320*2,0,3200,time,E)
             self.hist_svc.BookFillTH2('TE%d'%(ncalo),'Time vs Energy: calo %d'%(ncalo), 3000,0,447.6e3,320*2,0,3200,time,E)
+            #N(t) distribution, totoal and separete for 1 to 24
             self.hist_svc.BookFillTH1('T','N(t)',3000,0,447.6e3,time)
             self.hist_svc.BookFillTH1('T%d'%(ncalo),'N(t) : calo %d'%(ncalo),3000,0,447.6e3,time)
 
 
+            #N(t) with cuts applied on positron energy 
             energy_threshold = [1.4,1.5,1.6,1.7,1.8,1.9,2.0] # GeV
             for threshold in energy_threshold:
-                if E>threshold:                                    
+                if E>threshold:                    
                     self.hist_svc.BookFillTH1('Ethreshold%d_T'%(threshold*10),'N(t,E>%dGeV)'%(threshold),3000,0,447.6e3,time)                    
                     self.hist_svc.BookFillTH1('Ethreshold%d_T%d'%(threshold*10,ncalo),'N(t,E>%d GeV) : calorimeter %d'%(threshold,ncalo),3000,0,447.6e3,time)
 
@@ -284,7 +285,9 @@ class ReadVariables:
 
 
 def main():
-    job = ReadVariables()
+    run_version = 'all_v1'
+
+    job = ReadVariables(run_version)
     job.WriteHistos()
 
 if '__main__' == __name__:
